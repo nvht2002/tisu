@@ -151,6 +151,9 @@ export function ChatArea({ messages, status, onPreviewCode }: ChatAreaProps) {
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm]}
                       components={{
+                        pre({ children }) {
+                          return <>{children}</>
+                        },
                         code({ className, children, ...props }) {
                           const match = /language-(\w+)/.exec(className || "")
                           const codeString = String(children).replace(/\n$/, "")

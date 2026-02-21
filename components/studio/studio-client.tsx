@@ -9,6 +9,10 @@ import { ChatArea } from "./chat-area"
 import { ChatInput } from "./chat-input"
 import { PreviewPanel } from "./preview-panel"
 
+const chatTransport = new DefaultChatTransport({
+  api: "/api/chat",
+})
+
 interface StudioClientProps {
   user: {
     id: string
@@ -42,9 +46,7 @@ export function StudioClient({ user, initialProjects }: StudioClientProps) {
   const [input, setInput] = useState("")
 
   const { messages, status, sendMessage, stop, setMessages } = useChat({
-    transport: new DefaultChatTransport({
-      api: "/api/chat",
-    }),
+    transport: chatTransport,
   })
 
   const handleSendMessage = useCallback(() => {
