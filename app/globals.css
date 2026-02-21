@@ -84,14 +84,15 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
+*,
+*::before,
+*::after {
+  border-color: hsl(var(--border));
+}
 
-  body {
-    @apply bg-background text-foreground;
-  }
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
 }
 
 /* Scrollbar styling */
@@ -111,40 +112,4 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground));
-}
-
-/* Code highlighting styles */
-pre code.hljs {
-  display: block;
-  overflow-x: auto;
-  padding: 1em;
-}
-
-.hljs {
-  background: hsl(var(--card)) !important;
-  color: hsl(var(--foreground));
-}
-
-.hljs-keyword,
-.hljs-selector-tag {
-  color: hsl(var(--accent));
-}
-
-.hljs-string,
-.hljs-attr {
-  color: hsl(var(--chart-3));
-}
-
-.hljs-number,
-.hljs-literal {
-  color: hsl(var(--chart-4));
-}
-
-.hljs-comment {
-  color: hsl(var(--muted-foreground));
-}
-
-.hljs-title,
-.hljs-section {
-  color: hsl(var(--primary));
 }
