@@ -44,7 +44,6 @@ export function StudioClient({ user, initialProjects }: StudioClientProps) {
   const { messages, status, sendMessage, stop, setMessages } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/chat",
-      body: { model, temperature, maxTokens },
     }),
   })
 
@@ -52,9 +51,9 @@ export function StudioClient({ user, initialProjects }: StudioClientProps) {
     if (!input.trim()) return
     const text = input
     setInput("")
-    sendMessage({ text })
+    sendMessage({ text }, { body: { model, temperature, maxTokens } })
     setShowSettings(false)
-  }, [input, sendMessage])
+  }, [input, sendMessage, model, temperature, maxTokens])
 
   const handlePreviewCode = useCallback((code: string) => {
     setPreviewCode(code)
