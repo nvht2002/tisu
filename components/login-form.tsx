@@ -1,6 +1,11 @@
 "use client"
 
-import { signInWithGoogle, signInWithGithub } from "@/app/auth/actions"
+import {
+  signInWithEmail,
+  signUpWithEmail,
+  signInWithGoogle,
+  signInWithGithub,
+} from "@/app/auth/actions"
 import Image from "next/image"
 import { useState } from "react"
 
@@ -36,34 +41,56 @@ function GithubIcon() {
 }
 
 export function LoginForm() {
-  const [isLoadingGoogle, setIsLoadingGoogle] = useState(false)
-  const [isLoadingGithub, setIsLoadingGithub] = useState(false)
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const [isOAuthLoading, setIsOAuthLoading] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+  const [mode, setMode] = useState<"signin" | "signup">("signin")
 
-  const handleGoogle = async () => {
-    setIsLoadingGoogle(true)
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!email || !password) return
+
+    setIsLoading(true)
     setError(null)
-    const result = await signInWithGoogle()
-    if (result?.error) {
-      setError(result.error)
-      setIsLoadingGoogle(false)
+    setSuccess(null)
+
+    if (mode === "signin") {
+      const result = await signInWithEmail(email, password)
+      if (result?.error) {
+        setError(result.error)
+        setIsLoading(false)
+      }
+    } else {
+      const result = await signUpWithEmail(email, password)
+      if (result?.error) {
+        setError(result.error)
+        setIsLoading(false)
+      } else if (result?.success) {
+        setSuccess(result.success)
+        setIsLoading(false)
+      }
     }
   }
 
-  const handleGithub = async () => {
-    setIsLoadingGithub(true)
+  const handleOAuth = async (provider: "google" | "github") => {
+    setIsOAuthLoading(provider)
     setError(null)
-    const result = await signInWithGithub()
+    setSuccess(null)
+    const result =
+      provider === "google" ? await signInWithGoogle() : await signInWithGithub()
     if (result?.error) {
       setError(result.error)
-      setIsLoadingGithub(false)
+      setIsOAuthLoading(null)
     }
   }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="flex w-full max-w-md flex-col items-center gap-8 px-6">
-        {/* Logo and branding */}
+        {/* Logo */}
         <div className="flex flex-col items-center gap-4">
           <Image
             src="/images/logo.png"
@@ -74,9 +101,9 @@ export function LoginForm() {
           />
           <div className="flex flex-col items-center gap-1">
             <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              Welcome to TiSu AI Studio
+              TiSu AI Studio
             </h1>
-            <p className="text-sm text-muted-foreground text-center text-balance">
+            <p className="text-center text-sm text-muted-foreground text-balance">
               AI-powered development studio with Google Gemini
             </p>
           </div>
@@ -86,7 +113,7 @@ export function LoginForm() {
         <div className="w-full rounded-xl border border-border bg-card p-6">
           <div className="flex flex-col gap-4">
             <p className="text-center text-sm font-medium text-foreground">
-              Sign in to continue
+              {mode === "signin" ? "Sign in to continue" : "Create your account"}
             </p>
 
             {error && (
@@ -95,42 +122,104 @@ export function LoginForm() {
               </div>
             )}
 
-            <button
-              onClick={handleGoogle}
-              disabled={isLoadingGoogle || isLoadingGithub}
-              className="flex h-11 w-full items-center justify-center gap-3 rounded-lg border border-border bg-secondary/50 text-sm font-medium text-foreground transition-colors hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoadingGoogle ? (
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-foreground border-t-transparent" />
-              ) : (
-                <GoogleIcon />
-              )}
-              Continue with Google
-            </button>
+            {success && (
+              <div className="rounded-lg border border-primary/50 bg-primary/10 p-3 text-center text-sm text-primary">
+                {success}
+              </div>
+            )}
+
+            {/* Email / Password form */}
+            <form onSubmit={handleEmailAuth} className="flex flex-col gap-3">
+              <label className="sr-only" htmlFor="email">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="h-11 w-full rounded-lg border border-border bg-secondary/50 px-4 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
+              />
+              <label className="sr-only" htmlFor="password">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+                className="h-11 w-full rounded-lg border border-border bg-secondary/50 px-4 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
+              />
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="flex h-11 w-full items-center justify-center rounded-lg bg-primary text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? (
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                ) : mode === "signin" ? (
+                  "Sign In"
+                ) : (
+                  "Sign Up"
+                )}
+              </button>
+            </form>
 
             <button
-              onClick={handleGithub}
-              disabled={isLoadingGoogle || isLoadingGithub}
-              className="flex h-11 w-full items-center justify-center gap-3 rounded-lg border border-border bg-secondary/50 text-sm font-medium text-foreground transition-colors hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+              type="button"
+              onClick={() => {
+                setMode(mode === "signin" ? "signup" : "signin")
+                setError(null)
+                setSuccess(null)
+              }}
+              className="text-center text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
-              {isLoadingGithub ? (
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-foreground border-t-transparent" />
-              ) : (
-                <GithubIcon />
-              )}
-              Continue with GitHub
+              {mode === "signin"
+                ? "Don't have an account? Sign up"
+                : "Already have an account? Sign in"}
             </button>
-          </div>
 
-          <div className="mt-5 flex items-center gap-3">
-            <div className="h-px flex-1 bg-border" />
-            <span className="text-xs text-muted-foreground">or</span>
-            <div className="h-px flex-1 bg-border" />
-          </div>
+            {/* Divider */}
+            <div className="flex items-center gap-3">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-xs text-muted-foreground">or continue with</span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
 
-          <p className="mt-4 text-center text-xs text-muted-foreground leading-relaxed">
-            {"By signing in, you agree to our Terms of Service and Privacy Policy."}
-          </p>
+            {/* OAuth buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => handleOAuth("google")}
+                disabled={isLoading || isOAuthLoading !== null}
+                className="flex h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-border bg-secondary/50 text-sm font-medium text-foreground transition-colors hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isOAuthLoading === "google" ? (
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-foreground border-t-transparent" />
+                ) : (
+                  <GoogleIcon />
+                )}
+                Google
+              </button>
+
+              <button
+                onClick={() => handleOAuth("github")}
+                disabled={isLoading || isOAuthLoading !== null}
+                className="flex h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-border bg-secondary/50 text-sm font-medium text-foreground transition-colors hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isOAuthLoading === "github" ? (
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-foreground border-t-transparent" />
+                ) : (
+                  <GithubIcon />
+                )}
+                GitHub
+              </button>
+            </div>
+          </div>
         </div>
 
         <p className="text-xs text-muted-foreground">
